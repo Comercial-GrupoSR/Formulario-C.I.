@@ -38,8 +38,10 @@
             width: 100%; padding: 8px 10px; border: 1px solid #cccccc; border-radius: 5px; box-sizing: border-box; font-size: 13px; font-family: 'Montserrat', sans-serif; background-color: #fafafa; transition: all 0.2s;
         }
         .btn-generator { background-color: var(--verde-escuro); color: white; border: none; padding: 0 12px; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 12px; transition: all 0.2s; white-space: nowrap; }
+        .btn-generator:disabled { background-color: #9e9e9e; cursor: not-allowed; opacity: 0.8; }
         .btn-submit { background-color: var(--verde-escuro); color: white; border: none; width: 100%; padding: 12px; border-radius: 5px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'Russo One', sans-serif; letter-spacing: 1px; transition: background-color 0.2s; margin-top: 15px; }
         .loading { opacity: 0.6; pointer-events: none; }
+        .aviso-numero { font-size: 11px; color: var(--verde-escuro); margin-top: 4px; display: none; }
     </style>
 </head>
 <body>
@@ -58,6 +60,7 @@
                     <input type="text" id="numeroCI" name="numeroCI" placeholder="Gere o número ao lado" readonly required>
                     <button type="button" id="btnGerar" class="btn-generator" onclick="gerarNumero()">Gerar Número CI</button>
                 </div>
+                <div id="avisoNumero" class="aviso-numero">Número reservado. Para gerar outro, limpe o formulário.</div>
             </div>
 
             <!-- ... (seus campos de formulário permanecem iguais) ... -->
@@ -151,15 +154,33 @@
             if (resultado.success) {
                 alert("CI enviada com sucesso!");
                 document.getElementById('ciForm').reset();
+                liberarBotaoGerar(); // formulário foi limpo, libera para gerar um novo número
             } else { alert("Erro: " + resultado.error); }
         } catch (error) { alert("Erro ao enviar."); }
         finally { btnSubmit.innerText = "Enviar Comunicação Interna"; }
     });
-    
-    // ... manter sua função gerarNumero() existente ...
+
+    // Se o usuário der reset manual no formulário (ex: recarregar o form via
+    // algum botão próprio no futuro), o botão de gerar número volta a ficar
+    // disponível junto com o restante dos campos.
+    document.getElementById('ciForm').addEventListener('reset', function() {
+        liberarBotaoGerar();
+    });
+
+    function liberarBotaoGerar() {
+        const btnGerar = document.getElementById('btnGerar');
+        const inputNumero = document.getElementById('numeroCI');
+        const aviso = document.getElementById('avisoNumero');
+        btnGerar.disabled = false;
+        btnGerar.innerText = "Gerar Número CI";
+        inputNumero.value = "";
+        aviso.style.display = "none";
+    }
+
     async function gerarNumero() {
     const btnGerar = document.getElementById('btnGerar');
     const inputNumero = document.getElementById('numeroCI');
+    const aviso = document.getElementById('avisoNumero');
 
     btnGerar.disabled = true;
     btnGerar.innerText = "Gerando...";
@@ -170,13 +191,20 @@
 
         if (resultado.numero) {
             inputNumero.value = resultado.numero;
+            // Número já foi reservado no servidor: mantém o botão bloqueado
+            // para impedir clique duplo ou geração de um segundo número
+            // antes de enviar/limpar o formulário.
+            btnGerar.innerText = "Número Gerado ✓";
+            aviso.style.display = "block";
         } else {
-            alert("Não foi possível gerar o número. Tente novamente.");
+            alert(resultado.error || "Não foi possível gerar o número. Tente novamente.");
+            // Falhou (ex: sistema ocupado) — libera o botão para nova tentativa
+            btnGerar.disabled = false;
+            btnGerar.innerText = "Gerar Número CI";
         }
     } catch (error) {
         console.error(error);
         alert("Erro ao gerar número. Verifique sua conexão.");
-    } finally {
         btnGerar.disabled = false;
         btnGerar.innerText = "Gerar Número CI";
     }
