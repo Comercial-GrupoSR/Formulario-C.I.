@@ -1,0 +1,21 @@
+{
+  "name": "Comunicação Interna - Grupo SR",
+  "short_name": "CI Grupo SR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#10543A",
+  "theme_color": "#10543A",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
