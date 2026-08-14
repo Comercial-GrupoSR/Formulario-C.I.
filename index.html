@@ -6,7 +6,16 @@
     <title>Comunicação Interna - Grupo SR</title>
     <!-- Adicionado ?v=2 para forçar atualização do cache no celular -->
     <link rel="icon" href="favicon.ico?v=2" type="image/x-icon">
-    <link rel="apple-touch-icon" href="favicon.ico?v=2">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- PWA: manifest e theme-color (necessários para o "Instalar app") -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#10543A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CI Grupo SR">
+
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Russo+One&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -42,6 +51,22 @@
         .btn-submit { background-color: var(--verde-escuro); color: white; border: none; width: 100%; padding: 12px; border-radius: 5px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'Russo One', sans-serif; letter-spacing: 1px; transition: background-color 0.2s; margin-top: 15px; }
         .loading { opacity: 0.6; pointer-events: none; }
         .aviso-numero { font-size: 11px; color: var(--verde-escuro); margin-top: 4px; display: none; }
+
+        /* Botão de instalação do app */
+        #btnInstalar {
+            display: none;
+            background-color: var(--verde-escuro);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            margin-bottom: 12px;
+        }
     </style>
 </head>
 <body>
@@ -51,7 +76,11 @@
         <img src="Grupo SR.png" alt="Grupo SR">
         <p>Comunicação Interna</p>
     </div>
-    
+
+    <div class="form-body" style="padding-bottom: 0;">
+        <button type="button" id="btnInstalar">Instalar Aplicativo no Celular</button>
+    </div>
+
     <form id="ciForm" class="form-body">
         <div class="form-grid">
             <div class="form-group full-width">
@@ -211,6 +240,37 @@
         btnGerar.innerText = "Gerar Número CI";
     }
 }
+
+    // --- PWA: registro do Service Worker ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registrado:', reg.scope))
+                .catch(err => console.error('Falha ao registrar Service Worker:', err));
+        });
+    }
+
+    // --- PWA: botão de instalação (Android/Chrome) ---
+    let deferredPrompt;
+    const btnInstalar = document.getElementById('btnInstalar');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        btnInstalar.style.display = 'block';
+    });
+
+    btnInstalar.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        btnInstalar.style.display = 'none';
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+    });
+
+    window.addEventListener('appinstalled', () => {
+        btnInstalar.style.display = 'none';
+    });
 </script>
 </body>
 </html>
