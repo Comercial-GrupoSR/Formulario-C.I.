@@ -105,6 +105,7 @@
             <div class="form-group"><label>Almox <span>*</span></label><select id="almox" name="almox" required><option value="" disabled selected>Selecione...</option><option value="ELAB">ELAB</option><option value="EXP">EXP</option><option value="PM">PM</option></select></div>
             <div class="form-group"><label>Local de Aplicação do Item <span>*</span></label><select id="localAplicacao" name="localAplicacao" required><option value="" disabled selected>Selecione...</option><option value="Sede">Sede</option><option value="Bevilaqua">Bevilaqua</option><option value="Obra">Obra</option><option value="Particular">Particular</option></select></div>
             <div class="form-group full-width"><label>Código Item - Quantidade <span>*</span></label><input type="text" id="codigoQuantidade" name="codigoQuantidade" placeholder="Ex: Item XXXXX - 10UN" required></div>
+            <div class="form-group full-width"><label>Diretório <span>*</span></label><input type="text" id="diretorio" name="diretorio" placeholder="Ex: Caminho ou pasta de referência" required></div>
             <div class="form-group full-width"><label>Motivo da Comunicação Interna <span>*</span></label><input type="text" id="motivo" name="motivo" placeholder="Motivo resumido" required></div>
             <div class="form-group full-width"><label>Observações</label><textarea id="observacoes" name="observacoes" rows="3" placeholder="Informações adicionais (opcional)"></textarea></div>
 
@@ -162,6 +163,7 @@
             responsavel: document.getElementById('responsavel').value,
             destino: document.getElementById('destino').value,
             codigoQuantidade: document.getElementById('codigoQuantidade').value,
+            diretorio: document.getElementById('diretorio').value,
             nomeCliente: document.getElementById('nomeCliente').value,
             numeroPedido: document.getElementById('numeroPedido').value,
             localidade: document.getElementById('localidade').value,
