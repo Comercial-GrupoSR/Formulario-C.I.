@@ -140,65 +140,58 @@
         return filesData;
     }
 
-   document.getElementById('ciForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+    document.getElementById('ciForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-    // Validação: impede o envio se algum campo obrigatório estiver vazio
-    const form = document.getElementById('ciForm');
-    if (!form.checkValidity()) {
-        form.reportValidity(); // mostra ao usuário qual campo falta preencher
-        return;
-    }
-    
-    const btnSubmit = document.getElementById('btnEnviar');
-    btnSubmit.disabled = true; // bloqueia o clique enquanto processa
-    btnSubmit.innerText = "Processando arquivos e enviando...";
-    
-    // Coleta os arquivos
-    const arquivos = await filesToBase64(document.getElementById('arquivoAnexo'));
-    
-    const formData = {
-        numeroCI: document.getElementById('numeroCI').value,
-        // ... (restante dos campos)
-        acao: document.getElementById('acao').value,
-        responsavel: document.getElementById('responsavel').value,
-        destino: document.getElementById('destino').value,
-        codigoQuantidade: document.getElementById('codigoQuantidade').value,
-        diretorio: document.getElementById('diretorio').value,
-        nomeCliente: document.getElementById('nomeCliente').value,
-        numeroPedido: document.getElementById('numeroPedido').value,
-        localidade: document.getElementById('localidade').value,
-        corInterna: document.getElementById('corInterna').value,
-        pesoLiquido: document.getElementById('pesoLiquido').value.replace(',', '.'),
-        almox: document.getElementById('almox').value,
-        localAplicacao: document.getElementById('localAplicacao').value,
-        motivo: document.getElementById('motivo').value,
-        observacoes: document.getElementById('observacoes').value,
-        dataConclusao: document.getElementById('dataConclusao').value,
-        arquivos: arquivos // Passando o array de arquivos
-    };
-    
-    try {
-        const response = await fetch(WEB_APP_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-            body: JSON.stringify(formData)
-        });
-        const resultado = await response.json();
-       if (resultado.success) {
-    alert("CI enviada com sucesso!");
-    location.reload(); // recarrega a página, limpando tudo
-} else {
-            alert("Erro: " + resultado.error);
-            btnSubmit.disabled = false;
-            btnSubmit.innerText = "Enviar Comunicação Interna";
+        // Validação: impede o envio se algum campo obrigatório estiver vazio
+        const form = document.getElementById('ciForm');
+        if (!form.checkValidity()) {
+            form.reportValidity(); // mostra ao usuário qual campo falta preencher
+            return;
         }
-    } catch (error) {
-        alert("Erro ao enviar.");
-        btnSubmit.disabled = false;
-        btnSubmit.innerText = "Enviar Comunicação Interna";
-    }
-});
+        
+        const btnSubmit = document.getElementById('btnEnviar');
+        btnSubmit.innerText = "Processando arquivos e enviando...";
+        
+        // Coleta os arquivos
+        const arquivos = await filesToBase64(document.getElementById('arquivoAnexo'));
+        
+        const formData = {
+            numeroCI: document.getElementById('numeroCI').value,
+            // ... (restante dos campos)
+            acao: document.getElementById('acao').value,
+            responsavel: document.getElementById('responsavel').value,
+            destino: document.getElementById('destino').value,
+            codigoQuantidade: document.getElementById('codigoQuantidade').value,
+            diretorio: document.getElementById('diretorio').value,
+            nomeCliente: document.getElementById('nomeCliente').value,
+            numeroPedido: document.getElementById('numeroPedido').value,
+            localidade: document.getElementById('localidade').value,
+            corInterna: document.getElementById('corInterna').value,
+            pesoLiquido: document.getElementById('pesoLiquido').value.replace(',', '.'),
+            almox: document.getElementById('almox').value,
+            localAplicacao: document.getElementById('localAplicacao').value,
+            motivo: document.getElementById('motivo').value,
+            observacoes: document.getElementById('observacoes').value,
+            dataConclusao: document.getElementById('dataConclusao').value,
+            arquivos: arquivos // Passando o array de arquivos
+        };
+        
+        try {
+            const response = await fetch(WEB_APP_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify(formData)
+            });
+            const resultado = await response.json();
+            if (resultado.success) {
+                alert("CI enviada com sucesso!");
+                document.getElementById('ciForm').reset();
+                liberarBotaoGerar(); // formulário foi limpo, libera para gerar um novo número
+            } else { alert("Erro: " + resultado.error); }
+        } catch (error) { alert("Erro ao enviar."); }
+        finally { btnSubmit.innerText = "Enviar Comunicação Interna"; }
+    });
 
     // Se o usuário der reset manual no formulário (ex: recarregar o form via
     // algum botão próprio no futuro), o botão de gerar número volta a ficar
