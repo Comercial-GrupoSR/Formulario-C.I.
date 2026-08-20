@@ -7,7 +7,6 @@
     <!-- Adicionado ?v=2 para forçar atualização do cache no celular -->
     <link rel="icon" href="favicon.ico?v=2" type="image/x-icon">
     <link rel="apple-touch-icon" href="icon-192.png">
-
     <!-- PWA: manifest e theme-color (necessários para o "Instalar app") -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#10543A">
@@ -15,18 +14,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="CI Grupo SR">
-
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Russo+One&display=swap" rel="stylesheet">
     <style>
         :root {
             --verde-escuro: #10543A;
-            --verde-fundo-logo: #e8f5e9; 
+            --verde-fundo-logo: #e8f5e9;
         }
-
        body {
     font-family: 'Montserrat', sans-serif;
-    /* Substitua 'fundo.jpg' abaixo pela extensão real que o arquivo possui no seu computador */
-    background-image: url('fundo.jpeg') !important; 
+    background-image: url('fundo.jpeg') !important;
     background-repeat: repeat !important;
     background-position: center center !important;
     background-size: 200px !important;
@@ -52,7 +48,7 @@
         .btn-submit:disabled { background-color: #9e9e9e; cursor: not-allowed; opacity: 0.8; }
         .loading { opacity: 0.6; pointer-events: none; }
         .aviso-numero { font-size: 11px; color: var(--verde-escuro); margin-top: 4px; display: none; }
-
+        .aviso-anexos { font-size: 11px; color: #666; margin-top: 6px; }
         /* Botão de instalação do app */
         #btnInstalar {
             display: none;
@@ -71,17 +67,14 @@
     </style>
 </head>
 <body>
-
 <div class="form-container">
     <div class="header-banner">
         <img src="Grupo SR.png" alt="Grupo SR">
         <p>Comunicação Interna</p>
     </div>
-
     <div class="form-body" style="padding-bottom: 0;">
         <button type="button" id="btnInstalar">Instalar Aplicativo no Celular</button>
     </div>
-
     <form id="ciForm" class="form-body">
         <div class="form-grid">
             <div class="form-group full-width">
@@ -92,8 +85,6 @@
                 </div>
                 <div id="avisoNumero" class="aviso-numero">Número reservado. Para gerar outro, limpe o formulário.</div>
             </div>
-
-            <!-- ... (seus campos de formulário permanecem iguais) ... -->
             <div class="form-group"><label>Ação da CI <span>*</span></label><select id="acao" name="acao" required><option value="" disabled selected>Escolha...</option><option value="Fabricação">Fabricação</option><option value="Requisição">Requisição</option><option value="Pintura">Pintura</option></select></div>
             <div class="form-group"><label>Responsável CI <span>*</span></label><select id="responsavel" name="responsavel" required><option value="" disabled selected>Escolha...</option><option value="Fernando Hendges Lopes">Fernando Hendges Lopes</option><option value="Marcos Malezan Tasquetto">Marcos Malezan Tasquetto</option><option value="Raphael Naeher">Raphael Naeher</option><option value="Ricardo Moreira">Ricardo Moreira</option><option value="Alan Renato Virago">Alan Renato Virago</option><option value="José Tomas">José Tomas</option><option value="Luis Filipe">Luis Filipe</option><option value="Eduardo Prado">Eduardo Prado</option><option value="Enrique Carvalho">Enrique Carvalho</option><option value="Henrique Moreira">Henrique Moreira</option><option value="Rafael Fagan">Rafael Fagan</option><option value="Leôncio Andrade">Leôncio Andrade</option><option value="Gabriel Lago">Gabriel Lago</option></select></div>
             <div class="form-group"><label>Destino da Comunicação <span>*</span></label><select id="destino" name="destino" required><option value="" disabled>Escolha...</option><option value="Almoxarifado">Almoxarifado</option><option value="Expedição">Expedição</option><option value="PCP" selected>PCP</option></select></div>
@@ -109,31 +100,59 @@
             <div class="form-group full-width"><label>Diretório <span>*</span></label><input type="text" id="diretorio" name="diretorio" placeholder="Ex: Caminho ou pasta de referência" required></div>
             <div class="form-group full-width"><label>Motivo da Comunicação Interna <span>*</span></label><input type="text" id="motivo" name="motivo" placeholder="Motivo resumido" required></div>
             <div class="form-group full-width"><label>Observações</label><textarea id="observacoes" name="observacoes" rows="3" placeholder="Informações adicionais (opcional)"></textarea></div>
-
-            <!-- Novo campo de Upload -->
+            <!-- Campo de Upload -->
             <div class="form-group full-width">
                 <label>Anexar Arquivos (Arraste ou selecione múltiplos)</label>
                 <div id="drop-zone" style="border: 2px dashed #10543A; padding: 20px; text-align: center; background-color: #f9f9f9; border-radius: 5px;">
                     <input type="file" id="arquivoAnexo" name="arquivos[]" multiple style="width: 100%;">
                 </div>
+                <div class="aviso-anexos">Limite total de 20 MB somando todos os arquivos.</div>
             </div>
         </div>
         <button type="submit" id="btnEnviar" class="btn-submit full-width">Enviar Comunicação Interna</button>
     </form>
 </div>
-
 <script>
-    //const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzb0vX5Le_r_r6Jzfixfq5nY9M9EstzQrVBfujvjGSgQW_nl4Muct8HJnMghMlrwian/exec";
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyjMIMb8qC4ftq-hLHnPzMtP4ToMbOXlLxbRq0Sbp60Wskxh3EE57JgvYGu4eK-ZSLm/exec";
 
-    // Função para converter arquivos em Base64
+    // -----------------------------------------------------------------
+    // Chave compartilhada (opcional). Deixe vazia para manter o
+    // comportamento atual. Para ativar a proteção do Web App, cadastre a
+    // property APP_KEY no Apps Script e repita o mesmo valor aqui.
+    // -----------------------------------------------------------------
+    const APP_KEY = "";
+
+    // Limite total dos anexos: 20 MB. O base64 infla o arquivo em ~33% e tudo
+    // viaja num único POST, então um envio grande estoura a cota do Apps Script.
+    const LIMITE_ANEXOS_BYTES = 20 * 1024 * 1024;
+
+    // -----------------------------------------------------------------
+    // [CORREÇÃO] Antes o FileReader não tratava onerror. Se a leitura falhasse
+    // (arquivo removido do pendrive, permissão negada, arquivo corrompido), a
+    // Promise nunca resolvia nem rejeitava: o await ficava preso para sempre,
+    // o finally nunca rodava e o botão travava em "Processando...", com um
+    // número de CI já reservado no servidor.
+    // -----------------------------------------------------------------
     async function filesToBase64(inputElement) {
-        const files = inputElement.files;
-        let filesData = [];
-        for (let file of files) {
-            const base64 = await new Promise((resolve) => {
+        const files = Array.from(inputElement.files || []);
+        if (!files.length) return [];
+
+        const total = files.reduce((soma, f) => soma + f.size, 0);
+        if (total > LIMITE_ANEXOS_BYTES) {
+            const mb = (total / 1024 / 1024).toFixed(1);
+            throw new Error(
+                "Os anexos somam " + mb + " MB e o limite é 20 MB. " +
+                "Remova ou compacte alguns arquivos e tente novamente."
+            );
+        }
+
+        const filesData = [];
+        for (const file of files) {
+            const base64 = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onload  = () => resolve(String(reader.result).split(',')[1]);
+                reader.onerror = () => reject(new Error('Falha ao ler o arquivo "' + file.name + '".'));
+                reader.onabort = () => reject(new Error('Leitura do arquivo "' + file.name + '" foi cancelada.'));
                 reader.readAsDataURL(file);
             });
             filesData.push({ name: file.name, data: base64, type: file.type });
@@ -144,87 +163,85 @@
     document.getElementById('ciForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Validação: impede o envio se algum campo obrigatório estiver vazio
         const form = document.getElementById('ciForm');
         if (!form.checkValidity()) {
-            form.reportValidity(); // mostra ao usuário qual campo falta preencher
+            form.reportValidity();
             return;
         }
 
         const btnSubmit = document.getElementById('btnEnviar');
 
         // -----------------------------------------------------------------
-        // CORREÇÃO DE DUPLICAÇÃO DE CARD NO ASANA
+        // TRAVA CONTRA DUPLO CLIQUE
+        // O botão é desabilitado assim que o envio começa e só volta no
+        // finally, cobrindo sucesso e erro. Isso não substitui a validação de
+        // duplicidade no backend, mas fecha a causa mais comum de card
+        // duplicado: o clique de impaciência enquanto o servidor processa.
         // -----------------------------------------------------------------
-        // Antes, o botão de envio só tinha o TEXTO trocado durante o envio,
-        // mas continuava clicável. Como o processamento no servidor (criar
-        // o card no Asana + subir anexos + gerar PDFs) pode levar vários
-        // segundos, um clique duplo (ou um clique de impaciência enquanto
-        // o usuário espera) disparava um SEGUNDO envio do mesmo
-        // formulário, criando um card duplicado no Asana — já que o
-        // backend não tinha nenhuma verificação própria.
-        //
-        // Agora o botão é desabilitado (guard-clause) assim que o envio
-        // começa, e só é reabilitado no "finally", cobrindo tanto o
-        // caminho de sucesso quanto o de erro.
-        //
-        // Isso não substitui a validação de duplicidade no backend
-        // (idempotência), mas fecha a causa mais comum: o duplo clique.
-        // -----------------------------------------------------------------
-        if (btnSubmit.disabled) {
-            // Guarda extra: se por algum motivo o evento de submit disparar
-            // de novo enquanto já há um envio em andamento, ignora.
-            return;
-        }
+        if (btnSubmit.disabled) return;
+
         btnSubmit.disabled = true;
         btnSubmit.innerText = "Processando arquivos e enviando...";
-        
-        // Coleta os arquivos
-        const arquivos = await filesToBase64(document.getElementById('arquivoAnexo'));
-        
-        const formData = {
-            numeroCI: document.getElementById('numeroCI').value,
-            // ... (restante dos campos)
-            acao: document.getElementById('acao').value,
-            responsavel: document.getElementById('responsavel').value,
-            destino: document.getElementById('destino').value,
-            codigoQuantidade: document.getElementById('codigoQuantidade').value,
-            diretorio: document.getElementById('diretorio').value,
-            nomeCliente: document.getElementById('nomeCliente').value,
-            numeroPedido: document.getElementById('numeroPedido').value,
-            localidade: document.getElementById('localidade').value,
-            corInterna: document.getElementById('corInterna').value,
-            pesoLiquido: document.getElementById('pesoLiquido').value.replace(',', '.'),
-            almox: document.getElementById('almox').value,
-            localAplicacao: document.getElementById('localAplicacao').value,
-            motivo: document.getElementById('motivo').value,
-            observacoes: document.getElementById('observacoes').value,
-            dataConclusao: document.getElementById('dataConclusao').value,
-            arquivos: arquivos // Passando o array de arquivos
-        };
-        
+
+        // [CORREÇÃO] A leitura dos arquivos agora está DENTRO do try/finally.
+        // Antes ela ficava fora, então uma falha ali deixava o botão travado.
         try {
+            const arquivos = await filesToBase64(document.getElementById('arquivoAnexo'));
+
+            const formData = {
+                appKey: APP_KEY,
+                numeroCI: document.getElementById('numeroCI').value,
+                acao: document.getElementById('acao').value,
+                responsavel: document.getElementById('responsavel').value,
+                destino: document.getElementById('destino').value,
+                codigoQuantidade: document.getElementById('codigoQuantidade').value,
+                diretorio: document.getElementById('diretorio').value,
+                nomeCliente: document.getElementById('nomeCliente').value,
+                numeroPedido: document.getElementById('numeroPedido').value,
+                localidade: document.getElementById('localidade').value,
+                corInterna: document.getElementById('corInterna').value,
+                // [CORREÇÃO CRÍTICA] O peso vai CRU, sem replace. Antes o front
+                // trocava a primeira vírgula por ponto e o backend fazia o mesmo
+                // de novo — "1.500,50" virava "1.500.50" e o parseFloat devolvia
+                // 1.5, transformando 1500 kg em 1,5 kg no PDF e no card.
+                // A normalização agora acontece só no backend, uma única vez.
+                pesoLiquido: document.getElementById('pesoLiquido').value,
+                almox: document.getElementById('almox').value,
+                localAplicacao: document.getElementById('localAplicacao').value,
+                motivo: document.getElementById('motivo').value,
+                observacoes: document.getElementById('observacoes').value,
+                dataConclusao: document.getElementById('dataConclusao').value,
+                arquivos: arquivos
+            };
+
             const response = await fetch(WEB_APP_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(formData)
             });
+
             const resultado = await response.json();
+
             if (resultado.success) {
-                alert("CI enviada com sucesso!");
-                document.getElementById('ciForm').reset();
-                liberarBotaoGerar(); // formulário foi limpo, libera para gerar um novo número
-            } else { alert("Erro: " + resultado.error); }
-        } catch (error) { alert("Erro ao enviar."); }
-        finally {
+                alert("CI Nº " + resultado.numeroGerado + " enviada com sucesso!");
+                form.reset();
+                liberarBotaoGerar();
+            } else {
+                // [CORREÇÃO] Mostra o motivo real em vez de "Erro:" genérico.
+                alert("Erro ao enviar a CI:\n\n" + (resultado.error || "Motivo não informado pelo servidor."));
+            }
+
+        } catch (error) {
+            console.error(error);
+            // [CORREÇÃO] Antes era sempre "Erro ao enviar.", escondendo a causa.
+            alert("Erro ao enviar a CI:\n\n" + (error && error.message ? error.message : error) +
+                  "\n\nO número da CI continua reservado — corrija o problema e envie novamente sem gerar outro número.");
+        } finally {
             btnSubmit.disabled = false;
             btnSubmit.innerText = "Enviar Comunicação Interna";
         }
     });
 
-    // Se o usuário der reset manual no formulário (ex: recarregar o form via
-    // algum botão próprio no futuro), o botão de gerar número volta a ficar
-    // disponível junto com o restante dos campos.
     document.getElementById('ciForm').addEventListener('reset', function() {
         liberarBotaoGerar();
     });
@@ -240,37 +257,38 @@
     }
 
     async function gerarNumero() {
-    const btnGerar = document.getElementById('btnGerar');
-    const inputNumero = document.getElementById('numeroCI');
-    const aviso = document.getElementById('avisoNumero');
+        const btnGerar = document.getElementById('btnGerar');
+        const inputNumero = document.getElementById('numeroCI');
+        const aviso = document.getElementById('avisoNumero');
 
-    btnGerar.disabled = true;
-    btnGerar.innerText = "Gerando...";
+        btnGerar.disabled = true;
+        btnGerar.innerText = "Gerando...";
 
-    try {
-        const response = await fetch(WEB_APP_URL + "?action=getSequence");
-        const resultado = await response.json();
+        try {
+            const url = WEB_APP_URL + "?action=getSequence" +
+                        (APP_KEY ? "&appKey=" + encodeURIComponent(APP_KEY) : "");
+            const response = await fetch(url);
+            const resultado = await response.json();
 
-        if (resultado.numero) {
-            inputNumero.value = resultado.numero;
-            // Número já foi reservado no servidor: mantém o botão bloqueado
-            // para impedir clique duplo ou geração de um segundo número
-            // antes de enviar/limpar o formulário.
-            btnGerar.innerText = "Número Gerado ✓";
-            aviso.style.display = "block";
-        } else {
-            alert(resultado.error || "Não foi possível gerar o número. Tente novamente.");
-            // Falhou (ex: sistema ocupado) — libera o botão para nova tentativa
+            if (resultado.numero) {
+                inputNumero.value = resultado.numero;
+                // Número já reservado no servidor: mantém o botão bloqueado para
+                // impedir clique duplo ou geração de um segundo número antes de
+                // enviar/limpar o formulário.
+                btnGerar.innerText = "Número Gerado ✓";
+                aviso.style.display = "block";
+            } else {
+                alert(resultado.error || "Não foi possível gerar o número. Tente novamente.");
+                btnGerar.disabled = false;
+                btnGerar.innerText = "Gerar Número CI";
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao gerar número. Verifique sua conexão.");
             btnGerar.disabled = false;
             btnGerar.innerText = "Gerar Número CI";
         }
-    } catch (error) {
-        console.error(error);
-        alert("Erro ao gerar número. Verifique sua conexão.");
-        btnGerar.disabled = false;
-        btnGerar.innerText = "Gerar Número CI";
     }
-}
 
     // --- PWA: registro do Service Worker ---
     if ('serviceWorker' in navigator) {
@@ -284,13 +302,11 @@
     // --- PWA: botão de instalação (Android/Chrome) ---
     let deferredPrompt;
     const btnInstalar = document.getElementById('btnInstalar');
-
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
         btnInstalar.style.display = 'block';
     });
-
     btnInstalar.addEventListener('click', async () => {
         if (!deferredPrompt) return;
         btnInstalar.style.display = 'none';
@@ -298,7 +314,6 @@
         await deferredPrompt.userChoice;
         deferredPrompt = null;
     });
-
     window.addEventListener('appinstalled', () => {
         btnInstalar.style.display = 'none';
     });
