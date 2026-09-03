@@ -49,6 +49,18 @@
         .loading { opacity: 0.6; pointer-events: none; }
         .aviso-numero { font-size: 11px; color: var(--verde-escuro); margin-top: 4px; display: none; }
         .aviso-anexos { font-size: 11px; color: #666; margin-top: 6px; }
+        /* ---- Lista de anexos com remoção individual e somatório ---- */
+        #drop-zone.drop-ativo { background-color: #e8f5e9; border-color: #0b3d2a; }
+        .btn-escolher { background-color: var(--verde-escuro); color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 13px; font-family: 'Montserrat', sans-serif; }
+        .dica-arraste { font-size: 11px; color: #666; margin-top: 8px; }
+        #listaAnexos { list-style: none; margin: 10px 0 0 0; padding: 0; }
+        .item-anexo { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid #e0e0e0; border-radius: 4px; margin-bottom: 5px; background-color: #fafafa; font-size: 12px; }
+        .nome-anexo { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tamanho-anexo { color: #666; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .btn-remover { background: none; border: none; color: #de350b; cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 4px; border-radius: 3px; }
+        .btn-remover:hover { background-color: #ffebe6; }
+        #totalAnexos { margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--verde-escuro); }
+        #totalAnexos.excedeu { color: #de350b; }
         /* Botão de instalação do app */
         #btnInstalar {
             display: none;
@@ -104,8 +116,16 @@
             <div class="form-group full-width">
                 <label>Anexar Arquivos (Arraste ou selecione múltiplos)</label>
                 <div id="drop-zone" style="border: 2px dashed #10543A; padding: 20px; text-align: center; background-color: #f9f9f9; border-radius: 5px;">
-                    <input type="file" id="arquivoAnexo" name="arquivos[]" multiple style="width: 100%;">
+                    <!-- O input fica oculto: quem manda na seleção é a lista abaixo.
+                         Deixá-lo visível exibiria "Nenhum arquivo escolhido" logo acima
+                         de uma lista com arquivos, porque a seleção nativa é limpa a
+                         cada adição para permitir escolher o mesmo arquivo de novo. -->
+                    <input type="file" id="arquivoAnexo" name="arquivos[]" multiple style="display: none;">
+                    <button type="button" id="btnEscolherArquivos" class="btn-escolher">Selecionar arquivos</button>
+                    <div class="dica-arraste">ou arraste os arquivos para esta área</div>
                 </div>
+                <ul id="listaAnexos"></ul>
+                <div id="totalAnexos"></div>
                 <div class="aviso-anexos">Limite total de 20 MB somando todos os arquivos.</div>
             </div>
         </div>
@@ -127,21 +147,165 @@
     const LIMITE_ANEXOS_BYTES = 20 * 1024 * 1024;
 
     // -----------------------------------------------------------------
+    // GERENCIAMENTO DOS ANEXOS
+    // O <input type="file"> nativo não permite remover um arquivo: escolher
+    // de novo SUBSTITUI a seleção inteira. Por isso a seleção real vive neste
+    // array, e o input é apenas o meio de escolher. A cada adição o input é
+    // limpo, o que também permite reescolher um arquivo que foi removido.
+    // -----------------------------------------------------------------
+    let arquivosSelecionados = [];
+
+    const inputArquivos  = document.getElementById('arquivoAnexo');
+    const btnEscolher    = document.getElementById('btnEscolherArquivos');
+    const listaAnexosEl  = document.getElementById('listaAnexos');
+    const totalAnexosEl  = document.getElementById('totalAnexos');
+    const dropZone       = document.getElementById('drop-zone');
+
+    function formatarTamanho(bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+        return (bytes / 1024 / 1024).toFixed(2) + " MB";
+    }
+
+    // Identidade do arquivo, para não adicionar o mesmo duas vezes.
+    function chaveArquivo(f) {
+        return f.name + "|" + f.size + "|" + f.lastModified;
+    }
+
+    function totalBytesAnexos() {
+        return arquivosSelecionados.reduce((soma, f) => soma + f.size, 0);
+    }
+
+    function adicionarArquivos(listaDeArquivos) {
+        const novos = Array.from(listaDeArquivos || []);
+        let repetidos = 0;
+
+        novos.forEach(f => {
+            if (arquivosSelecionados.some(a => chaveArquivo(a) === chaveArquivo(f))) {
+                repetidos++;
+                return;
+            }
+            arquivosSelecionados.push(f);
+        });
+
+        atualizarListaAnexos();
+
+        if (repetidos) {
+            alert(repetidos === 1
+                ? "Um arquivo já estava na lista e não foi adicionado de novo."
+                : repetidos + " arquivos já estavam na lista e não foram adicionados de novo.");
+        }
+    }
+
+    function removerArquivo(indice) {
+        arquivosSelecionados.splice(indice, 1);
+        atualizarListaAnexos();
+    }
+
+    function limparAnexos() {
+        arquivosSelecionados = [];
+        atualizarListaAnexos();
+    }
+
+    function atualizarListaAnexos() {
+        listaAnexosEl.innerHTML = "";
+
+        arquivosSelecionados.forEach((arquivo, indice) => {
+            const item = document.createElement('li');
+            item.className = 'item-anexo';
+
+            const nome = document.createElement('span');
+            nome.className = 'nome-anexo';
+            // textContent, e não innerHTML: nome de arquivo é dado do usuário.
+            nome.textContent = arquivo.name;
+            nome.title = arquivo.name;
+
+            const tamanho = document.createElement('span');
+            tamanho.className = 'tamanho-anexo';
+            tamanho.textContent = formatarTamanho(arquivo.size);
+
+            const botao = document.createElement('button');
+            botao.type = 'button';
+            botao.className = 'btn-remover';
+            botao.textContent = '✕';
+            botao.title = 'Remover este arquivo';
+            botao.addEventListener('click', () => removerArquivo(indice));
+
+            item.appendChild(nome);
+            item.appendChild(tamanho);
+            item.appendChild(botao);
+            listaAnexosEl.appendChild(item);
+        });
+
+        const total = totalBytesAnexos();
+        const limiteMb = (LIMITE_ANEXOS_BYTES / 1024 / 1024).toFixed(0);
+        const excedeu = total > LIMITE_ANEXOS_BYTES;
+
+        if (!arquivosSelecionados.length) {
+            totalAnexosEl.textContent = "";
+            totalAnexosEl.classList.remove('excedeu');
+        } else {
+            const plural = arquivosSelecionados.length === 1 ? "arquivo" : "arquivos";
+            totalAnexosEl.textContent =
+                arquivosSelecionados.length + " " + plural + " · " +
+                formatarTamanho(total) + " de " + limiteMb + " MB" +
+                (excedeu ? " — acima do limite, remova algum arquivo" : "");
+            totalAnexosEl.classList.toggle('excedeu', excedeu);
+        }
+
+        // Bloqueia o envio enquanto estiver acima do limite.
+        const btnEnviar = document.getElementById('btnEnviar');
+        btnEnviar.disabled = excedeu;
+    }
+
+    btnEscolher.addEventListener('click', () => inputArquivos.click());
+
+    inputArquivos.addEventListener('change', () => {
+        adicionarArquivos(inputArquivos.files);
+        // Limpa a seleção nativa para que o mesmo arquivo possa ser escolhido
+        // de novo depois de removido da lista.
+        inputArquivos.value = "";
+    });
+
+    ['dragenter', 'dragover'].forEach(evento => {
+        dropZone.addEventListener(evento, e => {
+            e.preventDefault();
+            dropZone.classList.add('drop-ativo');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(evento => {
+        dropZone.addEventListener(evento, e => {
+            e.preventDefault();
+            dropZone.classList.remove('drop-ativo');
+        });
+    });
+
+    dropZone.addEventListener('drop', e => {
+        if (e.dataTransfer && e.dataTransfer.files) {
+            adicionarArquivos(e.dataTransfer.files);
+        }
+    });
+
+    // -----------------------------------------------------------------
     // [CORREÇÃO] Antes o FileReader não tratava onerror. Se a leitura falhasse
     // (arquivo removido do pendrive, permissão negada, arquivo corrompido), a
     // Promise nunca resolvia nem rejeitava: o await ficava preso para sempre,
     // o finally nunca rodava e o botão travava em "Processando...", com um
     // número de CI já reservado no servidor.
     // -----------------------------------------------------------------
-    async function filesToBase64(inputElement) {
-        const files = Array.from(inputElement.files || []);
+    async function filesToBase64() {
+        const files = arquivosSelecionados;
         if (!files.length) return [];
 
+        // Conferência final no envio. A lista já bloqueia o botão, mas esta
+        // trava cobre o caso de alguém reabilitar o botão pelo navegador.
         const total = files.reduce((soma, f) => soma + f.size, 0);
         if (total > LIMITE_ANEXOS_BYTES) {
             const mb = (total / 1024 / 1024).toFixed(1);
+            const limiteMb = (LIMITE_ANEXOS_BYTES / 1024 / 1024).toFixed(0);
             throw new Error(
-                "Os anexos somam " + mb + " MB e o limite é 20 MB. " +
+                "Os anexos somam " + mb + " MB e o limite é " + limiteMb + " MB. " +
                 "Remova ou compacte alguns arquivos e tente novamente."
             );
         }
@@ -186,7 +350,7 @@
         // [CORREÇÃO] A leitura dos arquivos agora está DENTRO do try/finally.
         // Antes ela ficava fora, então uma falha ali deixava o botão travado.
         try {
-            const arquivos = await filesToBase64(document.getElementById('arquivoAnexo'));
+            const arquivos = await filesToBase64();
 
             const formData = {
                 appKey: APP_KEY,
@@ -239,11 +403,16 @@
         } finally {
             btnSubmit.disabled = false;
             btnSubmit.innerText = "Enviar Comunicação Interna";
+            // Reaplica o estado do botão: se ainda houver anexos acima do
+            // limite, ele volta a ficar bloqueado.
+            atualizarListaAnexos();
         }
     });
 
     document.getElementById('ciForm').addEventListener('reset', function() {
         liberarBotaoGerar();
+        // O form.reset() limpa o input nativo, mas não o nosso array.
+        limparAnexos();
     });
 
     function liberarBotaoGerar() {
