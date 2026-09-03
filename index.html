@@ -53,13 +53,18 @@
         #drop-zone.drop-ativo { background-color: #e8f5e9; border-color: #0b3d2a; }
         .btn-escolher { background-color: var(--verde-escuro); color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 13px; font-family: 'Montserrat', sans-serif; }
         .dica-arraste { font-size: 11px; color: #666; margin-top: 8px; }
-        #listaAnexos { list-style: none; margin: 10px 0 0 0; padding: 0; }
-        .item-anexo { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid #e0e0e0; border-radius: 4px; margin-bottom: 5px; background-color: #fafafa; font-size: 12px; }
+        /* A lista fica DENTRO da área tracejada. Como aquela área é centralizada,
+           os itens precisam voltar a alinhar à esquerda, e uma linha separadora
+           marca onde termina o convite e começa o que já foi anexado. */
+        #listaAnexos { list-style: none; margin: 0; padding: 0; text-align: left; }
+        #listaAnexos:not(:empty) { margin-top: 14px; padding-top: 12px; border-top: 1px solid #cfe0d6; }
+        .item-anexo { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid #e0e0e0; border-radius: 4px; margin-bottom: 5px; background-color: #ffffff; font-size: 12px; }
         .nome-anexo { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .tamanho-anexo { color: #666; white-space: nowrap; font-variant-numeric: tabular-nums; }
         .btn-remover { background: none; border: none; color: #de350b; cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 4px; border-radius: 3px; }
         .btn-remover:hover { background-color: #ffebe6; }
-        #totalAnexos { margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--verde-escuro); }
+        #totalAnexos { font-size: 12px; font-weight: 600; color: var(--verde-escuro); }
+        #totalAnexos:not(:empty) { margin-top: 8px; }
         #totalAnexos.excedeu { color: #de350b; }
         /* Botão de instalação do app */
         #btnInstalar {
@@ -123,9 +128,9 @@
                     <input type="file" id="arquivoAnexo" name="arquivos[]" multiple style="display: none;">
                     <button type="button" id="btnEscolherArquivos" class="btn-escolher">Selecionar arquivos</button>
                     <div class="dica-arraste">ou arraste os arquivos para esta área</div>
+                    <ul id="listaAnexos"></ul>
+                    <div id="totalAnexos"></div>
                 </div>
-                <ul id="listaAnexos"></ul>
-                <div id="totalAnexos"></div>
                 <div class="aviso-anexos">Limite total de 20 MB somando todos os arquivos.</div>
             </div>
         </div>
